@@ -2,16 +2,24 @@ import os
 import datetime
 import bottlenose
 import xml.etree.ElementTree as ET
+import mws
 
 amazonPublicKey = os.environ.get('AmznPublicKey')
 amazonSecretKey = os.environ.get('AmznSecretKey')
 amazonAssociateID = os.environ.get('AmznAssociateId')
+MWSAccessKey = os.environ.get('AmznMWSPublicKey')
+MWSSecretKey = os.environ.get('AmznMWSSecretKey')
+MWSAccountID = os.environ.get('AmznMWSDeveloperID')
+
 timestamp = datetime.datetime.utcnow()
 amzdate = timestamp.strftime('%Y%m%dT%H%M%SZ')
 datestamp = timestamp.strftime('%Y%m%d')
 
 amazon = bottlenose.Amazon(amazonPublicKey, amazonSecretKey, amazonAssociateID)
 
+orders_api = mws.Orders(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
+service_status = orders_api.get_service_status()
+service_status
 
 class book(object):
 
