@@ -43,6 +43,13 @@ class book(object):
                                                  ResponseGroup='ItemAttributes')
         self.ItemRoot = ET.fromstring(self.ItemXMLResponse)
 
+        ' Creates element tree for getting item images'
+        self.ImageXMLResponse = amazon.ItemLookup(ItemId=self.ItemID,
+                                                 IdType=self.IdType,
+                                                 SearchIndex=self.SearchIndex,
+                                                 ResponseGroup='Images')
+        self.ImageRoot = ET.fromstring(self.ImageXMLResponse)
+
         self.TotalNewOffers = self.OfferRoot.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:TotalNew',
                                                      namespaces=self.NameSpace)[0].text
         self.TotalUsedOffers = self.OfferRoot.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:TotalUsed',
@@ -67,7 +74,16 @@ class book(object):
         self.Width = int(self.ItemRoot.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Width', namespaces=self.NameSpace)[0].text) / 100.0
         self.Title = self.ItemRoot.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:Title', namespaces=self.NameSpace)[0].text
         self.AmazonTradeValue = self.ItemRoot.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:TradeInValue/ns0:Amount', namespaces=self.NameSpace)[0].text
+        self.SmallImageURL = self.ImageRoot.findall('ns0:Items/ns0:Item/ns0:SmallImage/ns0:URL', namespaces=self.NameSpace)[0].text
+        self.SmallImageHeight = self.ImageRoot.findall('ns0:Items/ns0:Item/ns0:SmallImage/ns0:Height', namespaces=self.NameSpace)[0].text
+        self.SmallImageWidth = self.ImageRoot.findall('ns0:Items/ns0:Item/ns0:SmallImage/ns0:Width', namespaces=self.NameSpace)[0].text
+        self.MediumImageURL = self.ImageRoot.findall('ns0:Items/ns0:Item/ns0:MediumImage/ns0:URL', namespaces=self.NameSpace)[0].text
+        self.MediumImageHeight = self.ImageRoot.findall('ns0:Items/ns0:Item/ns0:MediumImage/ns0:Height', namespaces=self.NameSpace)[0].text
+        self.MediumImageWidth = self.ImageRoot.findall('ns0:Items/ns0:Item/ns0:MediumImage/ns0:Width', namespaces=self.NameSpace)[0].text
+        self.LargeImageURL = self.ImageRoot.findall('ns0:Items/ns0:Item/ns0:LargeImage/ns0:URL', namespaces=self.NameSpace)[0].text
+        self.LargeImageHeight = self.ImageRoot.findall('ns0:Items/ns0:Item/ns0:LargeImage/ns0:Height', namespaces=self.NameSpace)[0].text
+        self.LargeImageWidth = self.ImageRoot.findall('ns0:Items/ns0:Item/ns0:LargeImage/ns0:Width', namespaces=self.NameSpace)[0].text
 
 test = book()
 
-print(test.AmazonTradeValue)
+print(test.LargeImageWidth)
