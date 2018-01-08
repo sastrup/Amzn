@@ -20,24 +20,31 @@ class book(object):
         self.NameSpace = {'ns0': 'http://webservices.amazon.com/AWSECommerceService/2013-08-01'}
         self.IdType = 'ISBN'
         self.SearchIndex = 'Books'
-        self.ResponseGroup = 'OfferFull'
-        self.XMLResponse = amazon.ItemLookup(ItemId=self.ItemID,
+        self.OfferResponseGroup = 'OfferFull'
+        self.OfferXMLResponse = amazon.ItemLookup(ItemId=self.ItemID,
                                              IdType=self.IdType,
                                              SearchIndex=self.SearchIndex,
-                                             ResponseGroup=self.ResponseGroup)
-        self.root = ET.fromstring(self.XMLResponse)
-        self.TotalNewOffers = self.root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:TotalNew',
+                                             ResponseGroup=self.OfferResponseGroup)
+        self.OfferRoot = ET.fromstring(self.OfferXMLResponse)
+        self.RankXMLResponse = amazon.ItemLookup(ItemId=self.ItemID,
+                                                  IdType=self.IdType,
+                                                  SearchIndex=self.SearchIndex,
+                                                  ResponseGroup='SalesRank')
+        self.RankRoot = ET.fromstring(self.RankXMLResponse)
+        self.TotalNewOffers = self.OfferRoot.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:TotalNew',
                                                 namespaces=self.NameSpace)[0].text
-        self.TotalUsedOffers = self.root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:TotalUsed',
+        self.TotalUsedOffers = self.OfferRoot.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:TotalUsed',
                                                  namespaces=self.NameSpace)[0].text
-        self.LowestNewPrice = self.root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestNewPrice/ns0:Amount',
+        self.LowestNewPrice = self.OfferRoot.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestNewPrice/ns0:Amount',
                                                 namespaces=self.NameSpace)[0].text
-        self.LowestUsedPrice = self.root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestUsedPrice/ns0:Amount',
+        self.LowestUsedPrice = self.OfferRoot.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestUsedPrice/ns0:Amount',
                                                  namespaces=self.NameSpace)[0].text
-        self.BuyBoxMerchant = self.root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:Merchant/ns0:Name',
+        self.BuyBoxMerchant = self.OfferRoot.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:Merchant/ns0:Name',
                                                 namespaces=self.NameSpace)[0].text
+        self.ASIN = self.RankRoot.findall('ns0:Items/ns0:Item/ns0:ASIN', namespaces=self.NameSpace)[0].text
+        self.SalesRank = self.RankRoot.findall('ns0:Items/ns0:Item/ns0:SalesRank', namespaces=self.NameSpace)[0].text
 
 
 test = book()
 
-print(test.BuyBoxMerchant)
+print(test.SalesRank)
