@@ -3,7 +3,6 @@ import datetime
 import bottlenose
 import xml.etree.ElementTree as ET
 
-
 amazonPublicKey = os.environ.get('AmznPublicKey')
 amazonSecretKey = os.environ.get('AmznSecretKey')
 amazonAssociateID = os.environ.get('AmznAssociateId')
@@ -13,26 +12,29 @@ datestamp = timestamp.strftime('%Y%m%d')
 
 amazon = bottlenose.Amazon(amazonPublicKey, amazonSecretKey, amazonAssociateID)
 
-response = amazon.ItemLookup(ItemId='9781101873724',
-                             IdType='ISBN',
-                             SearchIndex='Books',
-                             ResponseGroup='Offers')
+class book(object):
 
-ns = {'def': '{http://webservices.amazon.com/AWSECommerceService/2013-08-01}'}
+    def __init__(self, ItemID='9780134475585'):  # '9781101873724'):
+        self.ItemID = ItemID
+        self.NameSpace = {'ns0': 'http://webservices.amazon.com/AWSECommerceService/2013-08-01'}
+        self.IdType = 'ISBN'
+        self.SearchIndex = 'Books'
+        self.ResponseGroup = 'Offers'
+        self.XMLResponse = amazon.ItemLookup(ItemId=self.ItemID,
+                                             IdType=self.IdType,
+                                             SearchIndex=self.SearchIndex,
+                                             ResponseGroup=self.ResponseGroup)
+        self.root = ET.fromstring(self.XMLResponse)
+        self.TotalNewOffers = self.root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:TotalNew',
+                                                namespaces=self.NameSpace)[0].text
+        self.TotalUsedOffers = self.root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:TotalUsed',
+                                                 namespaces=self.NameSpace)[0].text
+        self.LowestNewPrice = self.root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestNewPrice/ns0:Amount',
+                                                namespaces=self.NameSpace)[0].text
+        self.LowestUsedPrice = self.root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestUsedPrice/ns0:Amount',
+                                                 namespaces=self.NameSpace)[0].text
 
-root = ET.fromstring(response)
 
-print(root.findall('.//def:OperationRequest', namespaces=ns))
+test = book()
 
-
-# for child in root:
-#     for i in child:
-#         if i.tag != '{http://webservices.amazon.com/AWSECommerceService/2013-08-01}Request':
-#             pass
-#         else:
-#             for RequestItem in i:
-#                 print(RequestItem.tag)
-#
-#
-
-
+print(test.TotalUsedOffers)
