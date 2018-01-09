@@ -176,10 +176,16 @@ def get_title(root, namespace):
 
 def get_amazon_trade_value(root, namespace):
     try:
-        return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:TradeInValue/ns0:Amount', namespaces=namespace)[
-            0].text
+        return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:TradeInValue/ns0:Amount', namespaces=namespace)[0].text
     except Exception as e:
         print('Caught exception ' + e + ' in get_amazon_trade_value()')
+
+
+def get_amazon_trade_status(root, namespace):
+    try:
+        return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:IsEligibleForTradeIn', namespaces=namespace)[0].text
+    except Exception as e:
+        print('Caught exception ' + e + ' in get_amazon_trade_status')
 
 
 def get_small_image_url(root, namespace):
@@ -292,6 +298,7 @@ class bookers(object):
         self.Length = get_length(root=self.ItemRoot, namespace=self.NameSpace)
         self.Width = get_width(root=self.ItemRoot, namespace=self.NameSpace)
         self.Title = get_title(root=self.ItemRoot, namespace=self.NameSpace)
+        self.TradeInStatus = get_amazon_trade_status(root=self.ItemRoot, namespace=self.NameSpace)
         self.TradeInValue = get_amazon_trade_value(root=self.ItemRoot, namespace=self.NameSpace)
         self.SmallImageUrl = get_small_image_url(root=self.ImageRoot, namespace=self.NameSpace)
         self.SmallImageHeight = get_small_image_height(root=self.ImageRoot, namespace=self.NameSpace)
