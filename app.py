@@ -1,8 +1,9 @@
 import os
 import datetime
 import bottlenose
-import xml.etree.ElementTree as ET
 import mws
+import xml.etree.ElementTree as ET
+import statistics as stat
 
 amazonPublicKey = os.environ.get('AmznPublicKey')
 amazonSecretKey = os.environ.get('AmznSecretKey')
@@ -17,10 +18,6 @@ datestamp = timestamp.strftime('%Y%m%d')
 
 amazon = bottlenose.Amazon(amazonPublicKey, amazonSecretKey, amazonAssociateID)
 
-
-# orders_api = mws.Orders(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
-# service_status = orders_api.get_service_status()
-# service_status
 
 def get_XML_response(isbn, group):
     try:
@@ -48,28 +45,31 @@ def get_total_new_offers(root, namespace):
 
 def get_total_used_offers(root, namespace):
     try:
-        return root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:TotalUsed',namespaces=namespace)[0].text
+        return root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:TotalUsed', namespaces=namespace)[0].text
     except Exception as e:
         print('Caught exception ' + e + ' in get_total_used_offers()')
 
 
 def get_lowest_new_price(root, namespace):
     try:
-        return root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestNewPrice/ns0:Amount', namespaces=namespace)[0].text
+        return root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestNewPrice/ns0:Amount', namespaces=namespace)[
+            0].text
     except Exception as e:
         print('Caught exception ' + e + ' in get_lowest_new_price()')
 
 
 def get_lowest_used_price(root, namespace):
     try:
-        return root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestUsedPrice/ns0:Amount', namespaces=namespace)[0].text
+        return root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestUsedPrice/ns0:Amount', namespaces=namespace)[
+            0].text
     except Exception as e:
         print('Caught exception ' + e + ' in get_lowest_used_price()')
 
 
 def get_buy_box_merchant(root, namespace):
     try:
-        return root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:Merchant/ns0:Name', namespaces=namespace)[0].text
+        return root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:Merchant/ns0:Name', namespaces=namespace)[
+            0].text
     except Exception as e:
         print('Caught exception ' + e + ' in get_buy_box_merchant()')
 
@@ -125,35 +125,44 @@ def get_publication_date(root, namespace):
 
 def get_list_price(root, namespace):
     try:
-        return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ListPrice/ns0:Amount', namespaces=namespace)[0].text
+        return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ListPrice/ns0:Amount', namespaces=namespace)[
+            0].text
     except Exception as e:
         print('Caught exception ' + e + ' in get_list_price()')
 
 
 def get_weight(root, namespace):
     try:
-        return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Weight', namespaces=namespace)[0].text
+        return \
+        root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Weight', namespaces=namespace)[
+            0].text
     except Exception as e:
         print('Caught exception ' + e + ' in get_weight()')
 
 
 def get_height(root, namespace):
     try:
-        return int(root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Height', namespaces=namespace)[0].text) / 100.0
+        return int(
+            root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Height', namespaces=namespace)[
+                0].text) / 100.0
     except Exception as e:
         print('Caught exception ' + e + ' in get_height()')
 
 
 def get_length(root, namespace):
     try:
-        return int(root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Length', namespaces=namespace)[0].text) / 100.0
+        return int(
+            root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Length', namespaces=namespace)[
+                0].text) / 100.0
     except Exception as e:
         print('Caught exception ' + e + ' in get_length()')
 
 
 def get_width(root, namespace):
     try:
-        return int(root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Width', namespaces=namespace)[0].text) / 100.0
+        return int(
+            root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Width', namespaces=namespace)[
+                0].text) / 100.0
     except Exception as e:
         print('Caught exception ' + e + ' in get_width()')
 
@@ -167,7 +176,8 @@ def get_title(root, namespace):
 
 def get_amazon_trade_value(root, namespace):
     try:
-        return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:TradeInValue/ns0:Amount', namespaces=namespace)[0].text
+        return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:TradeInValue/ns0:Amount', namespaces=namespace)[
+            0].text
     except Exception as e:
         print('Caught exception ' + e + ' in get_amazon_trade_value()')
 
@@ -235,6 +245,22 @@ def get_large_image_width(root, namespace):
         print('Caught exception ' + e + ' in get_large_image_width()')
 
 
+def get_longest_side(sides):
+    return max(sides)
+
+
+def get_shortest_side(sides):
+    return min(sides)
+
+
+def get_median_side(sides):
+    return stat.median(sides)
+
+
+def get_length_girth_number(sides):
+    return sum(sides)
+
+
 class bookers(object):
     def __init__(self, isbn):
         self.Isbn = isbn
@@ -276,18 +302,59 @@ class bookers(object):
         self.LargeImageUrl = get_large_image_url(root=self.ImageRoot, namespace=self.NameSpace)
         self.LargeImageHeight = get_large_image_height(root=self.ImageRoot, namespace=self.NameSpace)
         self.LargeImageWidth = get_large_image_width(root=self.ImageRoot, namespace=self.NameSpace)
+        self.LongestSide = get_longest_side([self.Length, self.Height, self.Width])
+        self.ShortestSide = get_shortest_side([self.Length, self.Height, self.Width])
+        self.MedianSide = get_median_side([self.Length, self.Height, self.Width])
+        self.LengthGirth = get_length_girth_number([self.Length, self.Width])
+        self.Timestamp = datetime.datetime.utcnow()
+
+    def get_size_estimate(self):
+
+        if self.LongestSide < 15.0 and self.MedianSide < 12.0 and self.ShortestSide < 0.75:
+            return 'Small standard-size'
+        elif self.LongestSide < 18.0 and self.MedianSide < 14.0 and self.ShortestSide < 8.0:
+            return 'Large standard-size'
+        elif self.LongestSide < 60.0 and self.MedianSide < 30.0 and self.LengthGirth < 130.0:
+            return 'Small oversize'
+        elif self.LongestSide < 108.0 and self.LengthGirth < 130.0:
+            return 'Medium oversize'
+        elif self.LongestSide < 108.0 and self.LengthGirth < 165.0:
+            return 'Large oversize'
+        else:
+            return 'Special oversize'
+
+    def get_fee_estimate(self):
+
+        if 1 <= self.Timestamp.month < 10:
+            if self.get_size_estimate() == 'Small standard-size':
+                return 2.41
+            elif self.get_size_estimate() == 'Large standard-size':
+                return 2.99
+        elif 10 <= self.Timestamp.month < 13:
+            if self.get_size_estimate() == 'Small standard-size':
+                return 2.39
+            elif self.get_size_estimate() == 'Large standard-size':
+                return 2.88
+        else:
+            return 10.0
 
 
 book = bookers('0134475585')
 
-print(book.LargeImageUrl)
+print('Longest side: ' + str(book.LongestSide))
+print('Shortest side: ' + str(book.ShortestSide))
+print('Median side: ' + str(book.MedianSide))
+print('LengthGirth side: ' + str(book.LengthGirth))
+print('Size estimate: ' + book.get_size_estimate())
+print('Fee estimate: ' + str(book.get_fee_estimate()))
 
-
-
-
-
-
-
-
+orders_api = mws.Orders(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
+products_api = mws.Products(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
+feeds_api = mws.Feeds(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
+inventory_api = mws.Inventory(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
+error_api = mws.MWSError()
+recs_api = mws.Recommendations(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
+reports_api = mws.Reports(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
+sellers_api = mws.Sellers(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
 
 # ='0134475585'):#'9780134475585'):  # '9781101873724'):
