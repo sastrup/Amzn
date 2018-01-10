@@ -4,6 +4,7 @@ import bottlenose
 import mws
 import xml.etree.ElementTree as ET
 import statistics as stat
+import math
 
 amazonPublicKey = os.environ.get('AmznPublicKey')
 amazonSecretKey = os.environ.get('AmznSecretKey')
@@ -111,7 +112,8 @@ def get_publisher(root, namespace):
 
 def get_pages(root, namespace):
     try:
-        return float(root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:NumberOfPages', namespaces=namespace)[0].text)
+        return float(
+            root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:NumberOfPages', namespaces=namespace)[0].text)
     except Exception as e:
         print('Caught exception ' + e + ' in get_pages()')
 
@@ -134,8 +136,8 @@ def get_list_price(root, namespace):
 def get_weight(root, namespace):
     try:
         return \
-        root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Weight', namespaces=namespace)[
-            0].text / 100.0
+            root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Weight', namespaces=namespace)[
+                0].text / 100.0
     except Exception as e:
         100.0
 
@@ -176,14 +178,16 @@ def get_title(root, namespace):
 
 def get_amazon_trade_value(root, namespace):
     try:
-        return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:TradeInValue/ns0:Amount', namespaces=namespace)[0].text
+        return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:TradeInValue/ns0:Amount', namespaces=namespace)[
+            0].text
     except Exception as e:
         return 0
 
 
 def get_amazon_trade_status(root, namespace):
     try:
-        return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:IsEligibleForTradeIn', namespaces=namespace)[0].text
+        return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:IsEligibleForTradeIn', namespaces=namespace)[
+            0].text
     except Exception as e:
         return 0
 
@@ -266,13 +270,13 @@ def get_median_side(sides):
 def get_length_girth_number(sides):
     return sum(sides)
 
+
 def get_shipped_weight(root, namespace):
     try:
-        return float(root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:PackageDimensions/ns0:Weight', namespaces=namespace)[0].text) / 100.0
+        return float(root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:PackageDimensions/ns0:Weight',
+                                  namespaces=namespace)[0].text) / 100.0
     except Exception as e:
         print('Caught exception ' + e + ' in get_shipped_weight()')
-
-
 
 
 class bookers(object):
@@ -306,7 +310,8 @@ class bookers(object):
         self.Length = get_length(root=self.ItemRoot, namespace=self.NameSpace)
         self.Width = get_width(root=self.ItemRoot, namespace=self.NameSpace)
         self.Title = get_title(root=self.ItemRoot, namespace=self.NameSpace)
-        self.ShippedWeight = get_shipped_weight(root=self.ItemRoot, namespace=self.NameSpace)
+        self.ShippedWeightLbs = get_shipped_weight(root=self.ItemRoot, namespace=self.NameSpace)
+        self.ShippedWeightOz = get_shipped_weight(root=self.ItemRoot, namespace=self.NameSpace) * 16.0
         self.TradeInStatus = get_amazon_trade_status(root=self.ItemRoot, namespace=self.NameSpace)
         self.TradeInValue = get_amazon_trade_value(root=self.ItemRoot, namespace=self.NameSpace)
         self.SmallImageUrl = get_small_image_url(root=self.ImageRoot, namespace=self.NameSpace)
@@ -324,7 +329,7 @@ class bookers(object):
         self.LengthGirth = get_length_girth_number([self.Length, self.Width])
         self.Timestamp = datetime.datetime.utcnow()
 
-    def get_weight_estimate(self):#, length, height, pages, binding):
+    def get_weight_estimate(self):  # , length, height, pages, binding):
 
         reamSize = 2000.0  # paper ream size
         paperSquareIn = 93.5  # square inches in a 8.5x11 paper
@@ -349,38 +354,50 @@ class bookers(object):
 
     def get_size_estimate(self):
 
-        if self.LongestSide < 15.0 and self.MedianSide < 12.0 and self.ShortestSide < 0.75:
+        if self.LongestSide < 15.0 and self.MedianSide < 12.0 and self.ShortestSide < 0.75 and self.ShippedWeightOz < 12.0:
             return 'Small standard-size'
-        elif self.LongestSide < 18.0 and self.MedianSide < 14.0 and self.ShortestSide < 8.0:
+        elif self.LongestSide < 18.0 and self.MedianSide < 14.0 and self.ShortestSide < 8.0 and self.ShippedWeightLbs < 20.0:
             return 'Large standard-size'
-        elif self.LongestSide < 60.0 and self.MedianSide < 30.0 and self.LengthGirth < 130.0:
+        elif self.LongestSide < 60.0 and self.MedianSide < 30.0 and self.LengthGirth < 130.0 and self.ShippedWeightLbs < 70.0:
             return 'Small oversize'
-        elif self.LongestSide < 108.0 and self.LengthGirth < 130.0:
+        elif self.LongestSide < 108.0 and self.LengthGirth < 130.0 and self.ShippedWeightLbs < 150.0:
             return 'Medium oversize'
-        elif self.LongestSide < 108.0 and self.LengthGirth < 165.0:
+        elif self.LongestSide < 108.0 and self.LengthGirth < 165.0 and self.ShippedWeightLbs < 150.0:
             return 'Large oversize'
         else:
             return 'Special oversize'
 
-
     def get_fee_estimate(self):
 
-        if 1 <= self.Timestamp.month < 10:
-            if self.get_size_estimate() == 'Small standard-size':
+        WeightLbs = self.ShippedWeightLbs
+        month = self.Timestamp.month
+        sizeEstimate = self.get_size_estimate()
+
+        if 1 <= month < 10:
+            if sizeEstimate == 'Small standard-size':
                 return 2.41
-            elif self.get_size_estimate() == 'Large standard-size':
-                return 2.99
-        elif 10 <= self.Timestamp.month < 13:
-            if self.get_size_estimate() == 'Small standard-size':
+            elif sizeEstimate == 'Large standard-size':
+                if WeightLbs <= 1.0:
+                    return 2.99
+                elif 1 < WeightLbs <= 2.0:
+                    return 4.18
+                else:
+                    return 4.18 + 0.39 * math.ceil(WeightLbs - 2.0)
+        elif 10 <= month < 13:
+            if sizeEstimate == 'Small standard-size':
                 return 2.39
-            elif self.get_size_estimate() == 'Large standard-size':
-                return 2.88
+            elif sizeEstimate == 'Large standard-size':
+                if WeightLbs <= 1.0:
+                    return 2.88
+                elif 1 < WeightLbs <= 2.0:
+                    return 3.96
+                else:
+                    return 3.96 + 0.35 * math.ceil(WeightLbs - 2.0)
         else:
             return 10.0
 
 
 book = bookers('9781524797027')
-
 
 print('Longest side: ' + str(book.LongestSide))
 print('Shortest side: ' + str(book.ShortestSide))
@@ -390,7 +407,7 @@ print('Pages: ' + str(book.Pages))
 print('Size estimate: ' + book.get_size_estimate())
 print('Fee estimate: ' + str(book.get_fee_estimate()))
 print('Weight estimate: ' + str(book.get_weight_estimate()))
-print('Shipped weight: ' + str(book.ShippedWeight * 16.0))
+print('Shipped weight: ' + str(book.ShippedWeightOz))
 
 orders_api = mws.Orders(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
 products_api = mws.Products(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
@@ -400,7 +417,6 @@ error_api = mws.MWSError()
 recs_api = mws.Recommendations(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
 reports_api = mws.Reports(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
 sellers_api = mws.Sellers(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
-
 
 # root = ET.fromstring(products_api.get_matching_product(marketplaceid='ATVPDKIKX0DER',asins=[book.ASIN]).response.text)
 # tree = ET.ElementTree(root)
@@ -414,4 +430,3 @@ sellers_api = mws.Sellers(access_key=MWSAccessKey, secret_key=MWSSecretKey, acco
 # '9780062422507' dear girl
 #  '9781250169730' Oliver loving
 #  '9781524797027' need to know
-
