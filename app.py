@@ -10,7 +10,7 @@ amazonSecretKey = os.environ.get('AmznSecretKey')
 amazonAssociateID = os.environ.get('AmznAssociateId')
 MWSAccessKey = os.environ.get('AmznMWSPublicKey')
 MWSSecretKey = os.environ.get('AmznMWSSecretKey')
-MWSAccountID = os.environ.get('AmznMWSDeveloperID')
+MWSAccountID = os.environ.get('AmznMWSSellerID')
 
 timestamp = datetime.datetime.utcnow()
 amzdate = timestamp.strftime('%Y%m%dT%H%M%SZ')
@@ -111,7 +111,7 @@ def get_publisher(root, namespace):
 
 def get_pages(root, namespace):
     try:
-        return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:NumberOfPages', namespaces=namespace)[0].text
+        return float(root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:NumberOfPages', namespaces=namespace)[0].text)
     except Exception as e:
         print('Caught exception ' + e + ' in get_pages()')
 
@@ -135,9 +135,9 @@ def get_weight(root, namespace):
     try:
         return \
         root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Weight', namespaces=namespace)[
-            0].text
+            0].text / 100.0
     except Exception as e:
-        print('Caught exception ' + e + ' in get_weight()')
+        100.0
 
 
 def get_height(root, namespace):
@@ -178,14 +178,14 @@ def get_amazon_trade_value(root, namespace):
     try:
         return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:TradeInValue/ns0:Amount', namespaces=namespace)[0].text
     except Exception as e:
-        print('Caught exception ' + e + ' in get_amazon_trade_value()')
+        return 0
 
 
 def get_amazon_trade_status(root, namespace):
     try:
         return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:IsEligibleForTradeIn', namespaces=namespace)[0].text
     except Exception as e:
-        print('Caught exception ' + e + ' in get_amazon_trade_status')
+        return 0
 
 
 def get_small_image_url(root, namespace):
@@ -266,6 +266,14 @@ def get_median_side(sides):
 def get_length_girth_number(sides):
     return sum(sides)
 
+def get_shipped_weight(root, namespace):
+    try:
+        return float(root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:PackageDimensions/ns0:Weight', namespaces=namespace)[0].text) / 100.0
+    except Exception as e:
+        print('Caught exception ' + e + ' in get_shipped_weight()')
+
+
+
 
 class bookers(object):
     def __init__(self, isbn):
@@ -281,9 +289,9 @@ class bookers(object):
         self.ImageRoot = create_root(xml=self.ImageXMLResponse)
 
         self.TotalNewOffers = get_total_new_offers(root=self.OfferRoot, namespace=self.NameSpace)
-        self.TotalUsedOffers = get_total_used_offers(root=self.OfferRoot, namespace=self.NameSpace)
+        # self.TotalUsedOffers = get_total_used_offers(root=self.OfferRoot, namespace=self.NameSpace)
         self.LowestNewPrice = get_lowest_new_price(root=self.OfferRoot, namespace=self.NameSpace)
-        self.LowestUsedPrice = get_lowest_used_price(root=self.OfferRoot, namespace=self.NameSpace)
+        # self.LowestUsedPrice = get_lowest_used_price(root=self.OfferRoot, namespace=self.NameSpace)
         self.BuyBoxMerchant = get_buy_box_merchant(root=self.OfferRoot, namespace=self.NameSpace)
         self.ASIN = get_asin(root=self.RankRoot, namespace=self.NameSpace)
         self.SalesRank = get_sales_rank(root=self.RankRoot, namespace=self.NameSpace)
@@ -293,11 +301,12 @@ class bookers(object):
         self.Pages = get_pages(root=self.ItemRoot, namespace=self.NameSpace)
         self.PublicationDate = get_publication_date(root=self.ItemRoot, namespace=self.NameSpace)
         self.ListPrice = get_list_price(root=self.ItemRoot, namespace=self.NameSpace)
-        # self.Weight = get_weight(root=self.ItemRoot, namespace=self.NameSpace)
+        self.Weight = get_weight(root=self.ItemRoot, namespace=self.NameSpace)
         self.Height = get_height(root=self.ItemRoot, namespace=self.NameSpace)
         self.Length = get_length(root=self.ItemRoot, namespace=self.NameSpace)
         self.Width = get_width(root=self.ItemRoot, namespace=self.NameSpace)
         self.Title = get_title(root=self.ItemRoot, namespace=self.NameSpace)
+        self.ShippedWeight = get_shipped_weight(root=self.ItemRoot, namespace=self.NameSpace)
         self.TradeInStatus = get_amazon_trade_status(root=self.ItemRoot, namespace=self.NameSpace)
         self.TradeInValue = get_amazon_trade_value(root=self.ItemRoot, namespace=self.NameSpace)
         self.SmallImageUrl = get_small_image_url(root=self.ImageRoot, namespace=self.NameSpace)
@@ -315,6 +324,29 @@ class bookers(object):
         self.LengthGirth = get_length_girth_number([self.Length, self.Width])
         self.Timestamp = datetime.datetime.utcnow()
 
+    def get_weight_estimate(self):#, length, height, pages, binding):
+
+        reamSize = 2000.0  # paper ream size
+        paperSquareIn = 93.5  # square inches in a 8.5x11 paper
+        paperWeight = 10.0  # paper grade
+        ozInLb = 16.0  # ounces in pound
+
+        paperReamWeightlbs = paperWeight  # 60lbs per ream estimate
+        paperReamWeightOz = paperReamWeightlbs * ozInLb  # convert paper lbs to paper ozs
+        perPaperOz = paperReamWeightOz / reamSize  # convert ream to per paper weight
+        perSquareInOz = perPaperOz / paperSquareIn  # convert per paper oz to per paper square in oz
+
+        bookSquareIn = self.Length * self.Height  # get the square inches of the book
+        perPageOz = perSquareInOz * bookSquareIn  # multiply square inches of book by per square inch weight
+        bookPaperWeight = perPageOz * self.Pages  # multiply page count by per page oz estimate
+        hardCoverAdjustment = 1.5
+        softCoverAdjustment = 0
+
+        if self.BookBinding == 'Hardcover':
+            return round(bookPaperWeight + hardCoverAdjustment, 4)
+        else:
+            return round(bookPaperWeight + softCoverAdjustment, 4)
+
     def get_size_estimate(self):
 
         if self.LongestSide < 15.0 and self.MedianSide < 12.0 and self.ShortestSide < 0.75:
@@ -329,6 +361,7 @@ class bookers(object):
             return 'Large oversize'
         else:
             return 'Special oversize'
+
 
     def get_fee_estimate(self):
 
@@ -346,14 +379,18 @@ class bookers(object):
             return 10.0
 
 
-book = bookers('0134475585')
+book = bookers('9781524797027')
+
 
 print('Longest side: ' + str(book.LongestSide))
 print('Shortest side: ' + str(book.ShortestSide))
 print('Median side: ' + str(book.MedianSide))
 print('LengthGirth side: ' + str(book.LengthGirth))
+print('Pages: ' + str(book.Pages))
 print('Size estimate: ' + book.get_size_estimate())
 print('Fee estimate: ' + str(book.get_fee_estimate()))
+print('Weight estimate: ' + str(book.get_weight_estimate()))
+print('Shipped weight: ' + str(book.ShippedWeight * 16.0))
 
 orders_api = mws.Orders(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
 products_api = mws.Products(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
@@ -364,4 +401,17 @@ recs_api = mws.Recommendations(access_key=MWSAccessKey, secret_key=MWSSecretKey,
 reports_api = mws.Reports(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
 sellers_api = mws.Sellers(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
 
-# ='0134475585'):#'9780134475585'):  # '9781101873724'):
+
+# root = ET.fromstring(products_api.get_matching_product(marketplaceid='ATVPDKIKX0DER',asins=[book.ASIN]).response.text)
+# tree = ET.ElementTree(root)
+# tree.write('deargirl.xml')
+
+# '0134475585'
+# '9780134475585'
+# '9781101873724'
+# '9781250158062'
+# '1250158060'
+# '9780062422507' dear girl
+#  '9781250169730' Oliver loving
+#  '9781524797027' need to know
+
