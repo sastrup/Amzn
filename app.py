@@ -367,7 +367,7 @@ class bookers(object):
         else:
             return 'Special oversize'
 
-    def get_fee_estimate(self):
+    def get_fufillment_fee_estimate(self):
 
         WeightLbs = self.ShippedWeightLbs
         month = self.Timestamp.month
@@ -397,6 +397,31 @@ class bookers(object):
             return 10.0
 
 
+    def get_storage_fee_estimate(self):
+
+        month = self.Timestamp.month
+        length = self.Length
+        width = self.Width
+        height = self.Height
+        cubicIn = length * width * height
+        cubicFt = cubicIn / 1728 #  number of cubic inches
+
+        if 1 <= month < 10:
+            return round(0.64 * cubicFt, 4)
+        elif 10 < month <= 12:
+            return round(2.35 * cubicFt, 4)
+        else:
+            return 10.0
+
+
+    def get_total_fee_estimate(self):
+
+        fufillmentFee = self.get_fufillment_fee_estimate()
+        storageFee = self.get_storage_fee_estimate()
+
+        return fufillmentFee + storageFee
+
+
 book = bookers('9781524797027')
 
 print('Longest side: ' + str(book.LongestSide))
@@ -405,9 +430,11 @@ print('Median side: ' + str(book.MedianSide))
 print('LengthGirth side: ' + str(book.LengthGirth))
 print('Pages: ' + str(book.Pages))
 print('Size estimate: ' + book.get_size_estimate())
-print('Fee estimate: ' + str(book.get_fee_estimate()))
 print('Weight estimate: ' + str(book.get_weight_estimate()))
 print('Shipped weight: ' + str(book.ShippedWeightOz))
+print('Fufillment fee: ' + str(book.get_fufillment_fee_estimate()))
+print('Storage fee: ' + str(book.get_storage_fee_estimate()))
+print('Total fee: ' + str(book.get_total_fee_estimate()))
 
 orders_api = mws.Orders(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
 products_api = mws.Products(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
