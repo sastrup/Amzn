@@ -422,25 +422,12 @@ class Item(object):
         return fufillmentFee + storageFee
 
 
-
-orders_api = mws.Orders(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
-products_api = mws.Products(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
-feeds_api = mws.Feeds(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
-inventory_api = mws.Inventory(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
-error_api = mws.MWSError()
-recs_api = mws.Recommendations(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
-reports_api = mws.Reports(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
-sellers_api = mws.Sellers(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
-
-# root = ET.fromstring(products_api.get_matching_product(marketplaceid='ATVPDKIKX0DER',asins=[book.ASIN]).response.text)
-# tree = ET.ElementTree(root)
-# tree.write('deargirl.xml')
-
-# '0134475585'
-# '9780134475585'
-# '9781101873724'
-# '9781250158062'
-# '1250158060'
-# '9780062422507' dear girl
-#  '9781250169730' Oliver loving
-#  '9781524797027' need to know
+#
+# orders_api = mws.Orders(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
+# products_api = mws.Products(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
+# feeds_api = mws.Feeds(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
+# inventory_api = mws.Inventory(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
+# error_api = mws.MWSError()
+# recs_api = mws.Recommendations(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
+# reports_api = mws.Reports(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
+# sellers_api = mws.Sellers(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
