@@ -38,6 +38,15 @@ class AmazonCall:
         except Exception as e:
             return ''
 
+    def get_asin_XML_response(asin, group):
+        try:
+            return amazon.ItemLookup(ItemId=asin,
+                                     SearchIndex='Books',
+                                     IdType='ASIN',
+                                     ResponseGroup=group)
+        except Exception as e:
+            return ''
+
     def create_root(xml):
         try:
             return ET.fromstring(xml)
@@ -78,6 +87,32 @@ class AmazonCall:
                 0].text
         except Exception as e:
             return ''
+
+    def get_new_buy_box_price(root, namespace):
+        try:
+            if root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:OfferAttributes/ns0:Condition', namespaces=namespace)[0].text == 'New':
+                return float(root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:OfferListing/ns0:Price/ns0:Amount', namespaces=namespace)[0].text) / 100.0
+            elif root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:OfferAttributes/ns0:Condition', namespaces=namespace)[1].text == 'New':
+                return float(root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:OfferListing/ns0:Price/ns0:Amount', namespaces=namespace)[1].text) / 100.0
+            if root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:OfferAttributes/ns0:Condition', namespaces=namespace)[2].text == 'New':
+                return float(root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:OfferListing/ns0:Price/ns0:Amount', namespaces=namespace)[2].text) / 100.0
+            else:
+                return 0
+        except Exception as e:
+            return 0
+
+    def get_used_buy_box_price(root, namespace):
+        try:
+            if root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:OfferAttributes/ns0:Condition', namespaces=namespace)[0].text == 'Used':
+                return float(root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:OfferListing/ns0:Price/ns0:Amount', namespaces=namespace)[0].text) / 100.0
+            elif root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:OfferAttributes/ns0:Condition', namespaces=namespace)[1].text == 'Used':
+                return float(root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:OfferListing/ns0:Price/ns0:Amount', namespaces=namespace)[1].text) / 100.0
+            if root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:OfferAttributes/ns0:Condition', namespaces=namespace)[2].text == 'Used':
+                return float(root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:OfferListing/ns0:Price/ns0:Amount', namespaces=namespace)[2].text) / 100.0
+            else:
+                return 0
+        except Exception as e:
+            return 0
 
     def get_asin(root, namespace):
         try:
@@ -258,7 +293,7 @@ class AmazonCall:
             return float(root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:PackageDimensions/ns0:Weight',
                                       namespaces=namespace)[0].text) / 100.0
         except Exception as e:
-            print('Caught exception ' + e + ' in get_shipped_weight()')
+            return 0.0
 
 
 class Item(object):
@@ -309,7 +344,13 @@ class Item(object):
         self.ShortestSide = AmazonCall.get_shortest_side([self.Length, self.Height, self.Width])
         self.MedianSide = AmazonCall.get_median_side([self.Length, self.Height, self.Width])
         self.LengthGirth = AmazonCall.get_length_girth_number([self.Length, self.Width])
+        self.AsinSearchXMLResponse = AmazonCall.get_asin_XML_response(asin=self.ASIN, group='OfferFull')
+        self.AsinOfferRoot = AmazonCall.create_root(xml=self.AsinSearchXMLResponse)
+        self.NewBuyBoxPrice = AmazonCall.get_new_buy_box_price(root=self.AsinOfferRoot, namespace=self.NameSpace)
+        self.UsedBuyBoxPrice = AmazonCall.get_used_buy_box_price(root=self.AsinOfferRoot, namespace=self.NameSpace)
         self.Timestamp = datetime.datetime.utcnow()
+
+
 
     def get_weight_estimate(self):  # , length, height, pages, binding):
 
