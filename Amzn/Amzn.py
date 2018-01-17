@@ -86,7 +86,7 @@ class AmazonCall:
 
     def get_sales_rank(root, namespace):
         try:
-            return root.findall('ns0:Items/ns0:Item/ns0:SalesRank', namespaces=namespace)[0].text
+            return int(root.findall('ns0:Items/ns0:Item/ns0:SalesRank', namespaces=namespace)[0].text)
         except Exception as e:
             print('Caught exception ' + e + ' in get_sales_rank()')
 
