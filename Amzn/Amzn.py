@@ -18,6 +18,13 @@ amzdate = timestamp.strftime('%Y%m%dT%H%M%SZ')
 datestamp = timestamp.strftime('%Y%m%d')
 
 amazon = bottlenose.Amazon(amazonPublicKey, amazonSecretKey, amazonAssociateID)
+products_api = mws.Products(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
+
+
+class MwsCall:
+    def get_xml_response(self):
+        test_call = products_api.get_competitive_pricing_for_asin(asins='1250158060', marketplaceid='ATVPDKIKX0DER')
+        return test_call.original
 
 
 class AmazonCall:
@@ -29,15 +36,13 @@ class AmazonCall:
                                      IdType='ISBN',
                                      ResponseGroup=group)
         except Exception as e:
-            print('Caught exception ' + e + ' in get_XML_response()')
-
+            return ''
 
     def create_root(xml):
         try:
             return ET.fromstring(xml)
         except Exception as e:
-            print('Caught exception ' + e + ' in create_root()')
-
+            return ''
 
     def get_total_new_offers(root, namespace):
         try:
@@ -45,146 +50,135 @@ class AmazonCall:
         except Exception as e:
             return 999.0
 
-
     def get_total_used_offers(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:TotalUsed', namespaces=namespace)[0].text
         except Exception as e:
             return 999.0
 
-
     def get_lowest_new_price(root, namespace):
         try:
-            return root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestNewPrice/ns0:Amount', namespaces=namespace)[
+            return \
+            root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestNewPrice/ns0:Amount', namespaces=namespace)[
                 0].text / 100.0
         except Exception as e:
             return .99
-
 
     def get_lowest_used_price(root, namespace):
         try:
-            return root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestUsedPrice/ns0:Amount', namespaces=namespace)[
+            return \
+            root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestUsedPrice/ns0:Amount', namespaces=namespace)[
                 0].text / 100.0
         except Exception as e:
             return .99
-
 
     def get_buy_box_merchant(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:Offers/ns0:Offer/ns0:Merchant/ns0:Name', namespaces=namespace)[
                 0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_buy_box_merchant()')
-
+            return ''
 
     def get_asin(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:ASIN', namespaces=namespace)[0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_asin()')
-
+            return ''
 
     def get_sales_rank(root, namespace):
         try:
             return int(root.findall('ns0:Items/ns0:Item/ns0:SalesRank', namespaces=namespace)[0].text)
         except Exception as e:
-            print('Caught exception ' + e + ' in get_sales_rank()')
-
+            return 0
 
     def get_author(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:Author', namespaces=namespace)[0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_author()')
-
+            return ''
 
     def get_book_binding(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:Binding', namespaces=namespace)[0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_book_binding()')
-
+            return ''
 
     def get_publisher(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:Publisher', namespaces=namespace)[0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_publisher()')
-
+            return ''
 
     def get_pages(root, namespace):
         try:
             return float(
                 root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:NumberOfPages', namespaces=namespace)[0].text)
         except Exception as e:
-            print('Caught exception ' + e + ' in get_pages()')
-
+            return 0
 
     def get_publication_date(root, namespace):
         try:
-            return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:PublicationDate', namespaces=namespace)[0].text
+            return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:PublicationDate', namespaces=namespace)[
+                0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_publication_date()')
-
+            return ''
 
     def get_list_price(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ListPrice/ns0:Amount', namespaces=namespace)[
                 0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_list_price()')
-
+            return 0
 
     def get_weight(root, namespace):
         try:
             return \
-                root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Weight', namespaces=namespace)[
+                root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Weight',
+                             namespaces=namespace)[
                     0].text / 100.0
         except Exception as e:
             100.0
 
-
     def get_height(root, namespace):
         try:
             return int(
-                root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Height', namespaces=namespace)[
+                root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Height',
+                             namespaces=namespace)[
                     0].text) / 100.0
         except Exception as e:
-            print('Caught exception ' + e + ' in get_height()')
-
+            return 0
 
     def get_length(root, namespace):
         try:
             return int(
-                root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Length', namespaces=namespace)[
+                root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Length',
+                             namespaces=namespace)[
                     0].text) / 100.0
         except Exception as e:
-            print('Caught exception ' + e + ' in get_length()')
-
+            return 0
 
     def get_width(root, namespace):
         try:
             return int(
-                root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Width', namespaces=namespace)[
+                root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:ItemDimensions/ns0:Width',
+                             namespaces=namespace)[
                     0].text) / 100.0
         except Exception as e:
-            print('Caught exception ' + e + ' in get_width()')
-
+            return 0
 
     def get_title(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:Title', namespaces=namespace)[0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_title()')
-
+            return ''
 
     def get_amazon_trade_value(root, namespace):
         try:
-            return root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:TradeInValue/ns0:Amount', namespaces=namespace)[
+            return \
+            root.findall('ns0:Items/ns0:Item/ns0:ItemAttributes/ns0:TradeInValue/ns0:Amount', namespaces=namespace)[
                 0].text
         except Exception as e:
             return 0
-
 
     def get_amazon_trade_status(root, namespace):
         try:
@@ -193,85 +187,71 @@ class AmazonCall:
         except Exception as e:
             return 0
 
-
     def get_small_image_url(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:SmallImage/ns0:URL', namespaces=namespace)[0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_small_image_url()')
-
+            return ''
 
     def get_small_image_height(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:SmallImage/ns0:Height', namespaces=namespace)[0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_small_image_height()')
-
+            return 0
 
     def get_small_image_width(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:SmallImage/ns0:Width', namespaces=namespace)[0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_small_image_width()')
-
+            return 0
 
     def get_medium_image_url(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:MediumImage/ns0:URL', namespaces=namespace)[0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_medium_image_url()')
-
+            return ''
 
     def get_medium_image_height(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:MediumImage/ns0:Height', namespaces=namespace)[0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_medium_image_height()')
-
+            return 0
 
     def get_medium_image_width(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:MediumImage/ns0:Width', namespaces=namespace)[0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_medium_image_width()')
-
+            return 0
 
     def get_large_image_url(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:LargeImage/ns0:URL', namespaces=namespace)[0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_large_image_url()')
-
+            return ''
 
     def get_large_image_height(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:LargeImage/ns0:Height', namespaces=namespace)[0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_large_image_height()')
-
+            return 0
 
     def get_large_image_width(root, namespace):
         try:
             return root.findall('ns0:Items/ns0:Item/ns0:LargeImage/ns0:Width', namespaces=namespace)[0].text
         except Exception as e:
-            print('Caught exception ' + e + ' in get_large_image_width()')
-
+            return 0
 
     def get_longest_side(sides):
         return max(sides)
 
-
     def get_shortest_side(sides):
         return min(sides)
-
 
     def get_median_side(sides):
         return stat.median(sides)
 
-
     def get_length_girth_number(sides):
         return sum(sides)
-
 
     def get_shipped_weight(root, namespace):
         try:
@@ -405,7 +385,7 @@ class Item(object):
         width = self.Width
         height = self.Height
         cubicIn = length * width * height
-        cubicFt = cubicIn / 1728 #  number of cubic inches
+        cubicFt = cubicIn / 1728  # number of cubic inches
 
         if 1 <= month < 10:
             return round(0.64 * cubicFt, 4)
@@ -421,10 +401,8 @@ class Item(object):
 
         return fufillmentFee + storageFee
 
-
 #
 # orders_api = mws.Orders(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
-# products_api = mws.Products(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
 # feeds_api = mws.Feeds(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
 # inventory_api = mws.Inventory(access_key=MWSAccessKey, secret_key=MWSSecretKey, account_id=MWSAccountID, region='US')
 # error_api = mws.MWSError()
