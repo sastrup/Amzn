@@ -68,8 +68,8 @@ class AmazonCall:
     def get_lowest_new_price(root, namespace):
         try:
             return \
-            root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestNewPrice/ns0:Amount', namespaces=namespace)[
-                0].text / 100.0
+            float(root.findall('ns0:Items/ns0:Item/ns0:OfferSummary/ns0:LowestNewPrice/ns0:Amount', namespaces=namespace)[
+                0].text / 100.0)
         except Exception as e:
             return .99
 
